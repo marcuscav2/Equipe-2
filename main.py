@@ -84,6 +84,7 @@ while not fim_de_jogo:
             coletavel = pygame.draw.rect(tela, c["cor"], (c["posicao"][0], c["posicao"][1], 40, 40))
             #Colisão
             for tiro in projeteis:
+                tiro = pygame.draw.rect(tela, (0, 0, 0), (tiro[0], tiro[1], 10, 5))
                 if tiro.colliderect(coletavel):
                     c["ativo"] = False
                     min_tempo, max_tempo = c["intervalo"]
