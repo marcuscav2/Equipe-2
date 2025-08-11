@@ -12,25 +12,21 @@ relogio = pygame.time.Clock()
 x, y = 100, 100
 velocidade = 15
 
-#configuração dos inimigos
-inimigos = [
-    {"cor": (255, 0, 0), "posicao": None,
-     "ativo": False, "respawn": pygame.time.get_ticks() + 2000, "intervalo": (1000, 3000), "velocidade": 2},  # 1 a 3s
-
-    {"cor": (0, 255, 0), "posicao": None,
-     "ativo": False, "respawn": pygame.time.get_ticks() + 5000, "intervalo": (2000, 5000), "velocidade": 3},  # 2 a 5s
-
-    {"cor": (0, 0, 255), "posicao": None,
-     "ativo": False, "respawn": pygame.time.get_ticks() + 8000, "intervalo": (3000, 7000), "velocidade": 4}   # 4 a 8s
-]
-
-#Lista de projéteis
+#Lista de projéteis do cowboy
 projeteis = []
 velocidade_tiro = 30 #coloquei o dobro da velocidade do personagem
-
-# Timer para controlar a frequência dos tiros
+# Timer para controlar a frequência dos tiros 
 intervalo_tiro = 300 #300ms = 0.3 segundos
 ultimo_tiro = 0
+
+#configuração dos inimigos
+inimigos = {"cor": (0, 0, 255), "posicao": None, "ativo": False, 
+"respawn": pygame.time.get_ticks() + 8000, "intervalo": (3000, 7000), "velocidade": randint(1, 2)}
+
+projeteis_inimigo = []
+intervalo_tiro_inimigo = 200  #tempo entre tiros em ms
+ultimo_tiro_inimigo = 0
+velocidade_tiro_inimigo = 10
 
 #Loop principal
 fim_de_jogo = False
@@ -76,34 +72,54 @@ while not fim_de_jogo:
     cowboy = pygame.draw.rect(tela, (255, 0, 0), (x, y, 50, 50))  #Quadrado vermelho como cowboy provisório
     for tiro in projeteis:
         pygame.draw.rect(tela, (0, 0, 0), (tiro[0], tiro[1], 10, 5)) #projeteis na cor preta
+    for tiro in projeteis_inimigo:
+        pygame.draw.rect(tela, (255, 0, 0), (tiro[0], tiro[1], 10, 5))  # vermelho
+
 
     #Atualiza coletáveis
-    for c in inimigos:
-        if c["ativo"]:
+    if inimigos["ativo"]:
 
-            #mover no eixo x
-            c["posicao"][0] -= c["velocidade"]
+        #tiros do inimigo
+        if inimigos["posicao"][0] < largura - 40: #so atira quando tiver dentro da tela 
+            if tempo_atual - ultimo_tiro_inimigo >= intervalo_tiro_inimigo:
+                projeteis_inimigo.append([inimigos["posicao"][0], inimigos["posicao"][1] + 20])
+                ultimo_tiro_inimigo = tempo_atual
 
-            #Se encostar na borda, fim de jogo
-            if c["posicao"][0] <= 0:
+        for tiro in projeteis_inimigo:
+            tiro[0] -= velocidade_tiro_inimigo
+
+        cowboy_rect = pygame.Rect(x, y, 50, 50)
+        for tiro in projeteis_inimigo:
+            if cowboy_rect.colliderect(pygame.Rect(tiro[0], tiro[1], 10, 5)):
                 fim_de_jogo = True
 
-            #Desenha coletável
-            coletavel = pygame.draw.rect(tela, c["cor"], (c["posicao"][0], c["posicao"][1], 40, 40))
 
-            #Colisão
-            for tiro in projeteis:
-                tiro = pygame.draw.rect(tela, (0, 0, 0), (tiro[0], tiro[1], 10, 5))
-                if tiro.colliderect(coletavel):
-                    c["ativo"] = False
-                    min_tempo, max_tempo = c["intervalo"]
-                    c["respawn"] = tempo_atual + randint(min_tempo, max_tempo)
+        # Remover tiros que saíram da tela
+        projeteis_inimigo = [t for t in projeteis_inimigo if t[0] > 0]
 
-        else:
-            # Verifica se é hora de reaparecer
-            if tempo_atual >= c["respawn"]:
-                c["posicao"] = [randint(800, 800), randint(50, 550)]
-                c["ativo"] = True
+        #mover no eixo x
+        inimigos["posicao"][0] -= inimigos["velocidade"]
+
+        #Se o inimigo encostar na borda, fim de jogo
+        if inimigos["posicao"][0] <= 0:
+            fim_de_jogo = True
+
+        #Desenha o inimigo
+        coletavel = pygame.draw.rect(tela, inimigos["cor"], (inimigos["posicao"][0], inimigos["posicao"][1], 40, 40))
+
+        #Colisão do tiro do jogador com o inimigo
+        for tiro in projeteis:
+            tiro = pygame.Rect(tiro[0], tiro[1], 10, 5)
+            if tiro.colliderect(coletavel):
+                inimigos["ativo"] = False
+                min_tempo, max_tempo = inimigos["intervalo"]
+                inimigos["respawn"] = tempo_atual + randint(min_tempo, max_tempo)
+
+    else:
+        # Verifica se é hora de reaparecer
+        if tempo_atual >= inimigos["respawn"]:
+                inimigos["posicao"] = [randint(800, 900), randint(50, 550)]
+                inimigos["ativo"] = True
 
     #atualiza a tela
     pygame.display.flip()
