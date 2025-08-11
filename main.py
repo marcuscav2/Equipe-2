@@ -12,16 +12,16 @@ relogio = pygame.time.Clock()
 x, y = 100, 100
 velocidade = 15
 
-#configuração dos coletaveis
-coletaveis = [
+#configuração dos inimigos
+inimigos = [
     {"cor": (255, 0, 0), "posicao": None,
-     "ativo": False, "respawn": pygame.time.get_ticks() + 2000, "intervalo": (1000, 3000)},  # 1 a 3s
+     "ativo": False, "respawn": pygame.time.get_ticks() + 2000, "intervalo": (1000, 3000), "velocidade": 2},  # 1 a 3s
 
     {"cor": (0, 255, 0), "posicao": None,
-     "ativo": False, "respawn": pygame.time.get_ticks() + 5000, "intervalo": (2000, 5000)},  # 2 a 5s
+     "ativo": False, "respawn": pygame.time.get_ticks() + 5000, "intervalo": (2000, 5000), "velocidade": 3},  # 2 a 5s
 
     {"cor": (0, 0, 255), "posicao": None,
-     "ativo": False, "respawn": pygame.time.get_ticks() + 8000, "intervalo": (3000, 7000)}   # 4 a 8s
+     "ativo": False, "respawn": pygame.time.get_ticks() + 8000, "intervalo": (3000, 7000), "velocidade": 4}   # 4 a 8s
 ]
 
 #Lista de projéteis
@@ -71,17 +71,26 @@ while not fim_de_jogo:
     projeteis = nova_lista
 
 
-    #Desenha fundo, cowboy, coletaveis e projeteis
+    #Desenha fundo, cowboy, inimigos e projeteis
     tela.fill((255, 255, 255)) #Fundo branco
     cowboy = pygame.draw.rect(tela, (255, 0, 0), (x, y, 50, 50))  #Quadrado vermelho como cowboy provisório
     for tiro in projeteis:
         pygame.draw.rect(tela, (0, 0, 0), (tiro[0], tiro[1], 10, 5)) #projeteis na cor preta
 
     #Atualiza coletáveis
-    for c in coletaveis:
+    for c in inimigos:
         if c["ativo"]:
+
+            #mover no eixo x
+            c["posicao"][0] -= c["velocidade"]
+
+            #Se encostar na borda, fim de jogo
+            if c["posicao"][0] <= 0:
+                fim_de_jogo = True
+
             #Desenha coletável
             coletavel = pygame.draw.rect(tela, c["cor"], (c["posicao"][0], c["posicao"][1], 40, 40))
+
             #Colisão
             for tiro in projeteis:
                 tiro = pygame.draw.rect(tela, (0, 0, 0), (tiro[0], tiro[1], 10, 5))
@@ -93,7 +102,7 @@ while not fim_de_jogo:
         else:
             # Verifica se é hora de reaparecer
             if tempo_atual >= c["respawn"]:
-                c["posicao"] = [randint(40, 760), randint(50, 550)]
+                c["posicao"] = [randint(800, 800), randint(50, 550)]
                 c["ativo"] = True
 
     #atualiza a tela
