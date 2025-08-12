@@ -322,9 +322,11 @@ while True:
         if event.type == QUIT:
             pygame.quit()
             exit()
+            #ciwboy anda quando aperta a tecla direita
         if event.type == KEYDOWN:
             if event.key == K_RIGHT:
                 cowboy.iniciar_andar()
+                #cowboy atira quando aperta espaco
             elif event.key == K_SPACE:
                 atirando.iniciar_tiro()
     
