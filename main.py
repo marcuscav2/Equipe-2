@@ -22,14 +22,14 @@ ultimo_tiro = 0
 
 #configuração dos inimigos
 inimigos = [
-    {"cor": (255, 0, 0), "posicao": None, "velocidade": 2,
-     "ativo": False, "respawn": pygame.time.get_ticks() + 2000, "intervalo": (1000, 3000)}, #intervalo de respawn 1 a 3 seg
+    {"cor": (255, 0, 0), "posicao": None, "velocidade_x": 2, "velocidade_y": randint(-2, 2) or 1,
+     "ativo": False,  "ultimo_tiro": 0, "respawn": pygame.time.get_ticks() + 2000, "intervalo": (1000, 3000)},
     
-    {"cor": (0, 255, 0), "posicao": None, "velocidade": 3,
-     "ativo": False, "respawn": pygame.time.get_ticks() + 5000, "intervalo": (2000, 5000)}, #intervalo de respawn 2 a 5 seg
+    {"cor": (0, 255, 0), "posicao": None, "velocidade_x": 3, "velocidade_y": randint(-2, 2) or 1,
+     "ativo": False,  "ultimo_tiro": 0, "respawn": pygame.time.get_ticks() + 5000, "intervalo": (2000, 5000)},
     
-    {"cor": (0, 0, 255), "posicao": None, "velocidade": 4,
-     "ativo": False, "respawn": pygame.time.get_ticks() + 8000, "intervalo": (4000, 8000)} #intervalo de respawn 4 a 8 seg
+    {"cor": (0, 0, 255), "posicao": None, "velocidade_x": 4, "velocidade_y": randint(-2, 2) or 1,
+     "ativo": False,  "ultimo_tiro": 0, "respawn": pygame.time.get_ticks() + 8000, "intervalo": (4000, 8000)}
 ]
 
 projeteis_inimigo = []
@@ -112,8 +112,9 @@ while not fim_de_jogo:
             #tiros do inimigo
             if i["posicao"][0] < largura - 40: #so atira quando tiver dentro da tela 
                 if tempo_atual - ultimo_tiro_inimigo >= intervalo_tiro_inimigo:
-                    projeteis_inimigo.append([i["posicao"][0], i["posicao"][1] + 20])
-                    ultimo_tiro_inimigo = tempo_atual
+                    if tempo_atual - i["ultimo_tiro"] >= intervalo_tiro_inimigo:
+                        projeteis_inimigo.append([i["posicao"][0], i["posicao"][1] + 20])
+                        i["ultimo_tiro"] = tempo_atual
 
             for tiro in projeteis_inimigo:
                 tiro[0] -= velocidade_tiro_inimigo
@@ -123,12 +124,19 @@ while not fim_de_jogo:
                 if cowboy_rect.colliderect(pygame.Rect(tiro[0], tiro[1], 10, 5)):
                     fim_de_jogo = True
 
-
-            # Remover tiros que saíram da tela
+            #Remover tiros que saíram da tela
             projeteis_inimigo = [t for t in projeteis_inimigo if t[0] > 0]
 
-            #mover no eixo x
-            i["posicao"][0] -= i["velocidade"]
+            #Mover no eixo x
+            i["posicao"][0] -= i["velocidade_x"]
+
+            #Mover no eixo y
+            i["posicao"][1] += i["velocidade_y"]
+
+            #Ricochete nas bordas
+            if i["posicao"][1] <= 0 or i["posicao"][1] >= altura - 40:
+                i["velocidade_y"] *= -1
+
 
             #Se o inimigo encostar na borda, fim de jogo
             if i["posicao"][0] <= 0:
@@ -155,6 +163,7 @@ while not fim_de_jogo:
             # Verifica se é hora de reaparecer
             if tempo_atual >= i["respawn"]:
                     i["posicao"] = [randint(800, 900), randint(50, 550)]
+                    i["velocidade_y"] = randint(-2, 2) or 1
                     i["ativo"] = True
 
     #Logica de exibir e coletar os drops
