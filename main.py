@@ -8,6 +8,7 @@ tela = pygame.display.set_mode((largura, altura))
 relogio = pygame.time.Clock()
 fonte = pygame.font.SysFont("arial", 40)
 abates = 0
+vidas = 3
 
 #Posição do cowboy
 x, y = 100, 100
@@ -23,16 +24,18 @@ ultimo_tiro = 0
 #configuração dos inimigos
 inimigos = [
     {"cor": (255, 0, 0), "posicao": None, "velocidade_x": 2, "velocidade_y": randint(-2, 2) or 1,
-     "ativo": False,  "ultimo_tiro": 0, "respawn": pygame.time.get_ticks() + 2000, "intervalo": (1000, 3000)},
+     "ultimo_tiro": 0, "projeteis": [],
+     "ativo": False, "respawn": pygame.time.get_ticks() + 2000, "intervalo": (1000, 3000)},
     
     {"cor": (0, 255, 0), "posicao": None, "velocidade_x": 3, "velocidade_y": randint(-2, 2) or 1,
-     "ativo": False,  "ultimo_tiro": 0, "respawn": pygame.time.get_ticks() + 5000, "intervalo": (2000, 5000)},
+     "ultimo_tiro": 0, "projeteis": [],
+     "ativo": False, "respawn": pygame.time.get_ticks() + 5000, "intervalo": (2000, 5000)},
     
     {"cor": (0, 0, 255), "posicao": None, "velocidade_x": 4, "velocidade_y": randint(-2, 2) or 1,
-     "ativo": False,  "ultimo_tiro": 0, "respawn": pygame.time.get_ticks() + 8000, "intervalo": (4000, 8000)}
+     "ultimo_tiro": 0, "projeteis": [],
+     "ativo": False, "respawn": pygame.time.get_ticks() + 8000, "intervalo": (4000, 8000)}
 ]
 
-projeteis_inimigo = []
 intervalo_tiro_inimigo = 200  #tempo entre tiros em ms
 ultimo_tiro_inimigo = 0
 velocidade_tiro_inimigo = 10
@@ -40,6 +43,9 @@ velocidade_tiro_inimigo = 10
 #Lista de drops
 drops = []
 tipos_de_drops = [(255,0,0),(0,0,255)]#Ex de cores para os drops
+
+coracao_img = pygame.image.load("coracao.png").convert_alpha()
+coracao_img = pygame.transform.scale(coracao_img, (30, 30))
 
 #Loop principal
 fim_de_jogo = False
@@ -100,8 +106,10 @@ while not fim_de_jogo:
     cowboy = pygame.draw.rect(tela, (255, 0, 0), (x, y, 50, 50))  #Quadrado vermelho como cowboy provisório
     for tiro in projeteis:
         pygame.draw.rect(tela, (0, 0, 0), (tiro[0], tiro[1], 10, 5)) #projeteis na cor preta
-    for tiro in projeteis_inimigo:
-        pygame.draw.rect(tela, (255, 0, 0), (tiro[0], tiro[1], 10, 5))  # vermelho
+    for inimigo_data in inimigos:
+        for tiro in inimigo_data["projeteis"]:
+            pygame.draw.rect(tela, (255, 0, 0), (tiro[0], tiro[1], 10, 5))
+
 
 
     #Atualiza inimigos
@@ -113,19 +121,23 @@ while not fim_de_jogo:
             if i["posicao"][0] < largura - 40: #so atira quando tiver dentro da tela 
                 if tempo_atual - ultimo_tiro_inimigo >= intervalo_tiro_inimigo:
                     if tempo_atual - i["ultimo_tiro"] >= intervalo_tiro_inimigo:
-                        projeteis_inimigo.append([i["posicao"][0], i["posicao"][1] + 20])
+                        i["projeteis"].append([i["posicao"][0], i["posicao"][1] + 20])
                         i["ultimo_tiro"] = tempo_atual
 
-            for tiro in projeteis_inimigo:
+            #Mover os projeteis do inimigo
+            for tiro in i["projeteis"]:
                 tiro[0] -= velocidade_tiro_inimigo
 
-            cowboy_rect = pygame.Rect(x, y, 50, 50)
-            for tiro in projeteis_inimigo:
-                if cowboy_rect.colliderect(pygame.Rect(tiro[0], tiro[1], 10, 5)):
-                    fim_de_jogo = True
+            #Remover projéteis que saíram da tela
+            i["projeteis"] = [t for t in i["projeteis"] if t[0] > 0]
 
-            #Remover tiros que saíram da tela
-            projeteis_inimigo = [t for t in projeteis_inimigo if t[0] > 0]
+            cowboy_rect = pygame.Rect(x, y, 50, 50)
+            for tiro in i["projeteis"]:
+                if cowboy_rect.colliderect(pygame.Rect(tiro[0], tiro[1], 10, 5)):
+                    i["projeteis"].remove(tiro)  # Remove o tiro que acertou
+                    vidas -= 1
+                    if vidas <= 0:
+                        fim_de_jogo = True
 
             #Mover no eixo x
             i["posicao"][0] -= i["velocidade_x"]
@@ -138,9 +150,15 @@ while not fim_de_jogo:
                 i["velocidade_y"] *= -1
 
 
-            #Se o inimigo encostar na borda, fim de jogo
+            #Se o inimigo encostar na borda, perde uma vida
             if i["posicao"][0] <= 0:
-                fim_de_jogo = True
+                vidas -= 1
+                i["ativo"] = False  # Some da tela
+                i["projeteis"].clear()  # Limpa tiros dele
+                min_tempo, max_tempo = i["intervalo"]
+                i["respawn"] = tempo_atual + randint(min_tempo, max_tempo)
+                if vidas <= 0:
+                    fim_de_jogo = True
 
             #Desenha o inimigo
             inimigo = pygame.draw.rect(tela, i["cor"], (i["posicao"][0], i["posicao"][1], 40, 40))
@@ -150,6 +168,7 @@ while not fim_de_jogo:
                 tiro = pygame.Rect(tiro[0], tiro[1], 10, 5)
                 if tiro.colliderect(inimigo):
                     i["ativo"] = False
+                    i["projeteis"].clear()
                     min_tempo, max_tempo = i["intervalo"]
                     i["respawn"] = tempo_atual + randint(min_tempo, max_tempo)
                     abates += 1
@@ -179,6 +198,10 @@ while not fim_de_jogo:
 
     #Desenha o texto formatado
     tela.blit(txt_formatado, (600, 0))  # Posição do texto de abates
+
+    #desenha os corações
+    for v in range(vidas):
+        tela.blit(coracao_img, (10 + v * 35, 10))
 
     #atualiza a tela
     pygame.display.flip()
