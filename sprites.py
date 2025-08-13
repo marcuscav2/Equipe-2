@@ -1,14 +1,8 @@
 import pygame
-from pygame.locals import *
-from sys import exit
+
 
 pygame.init()
 
-largura = 640
-altura = 480
-
-tela = pygame.display.set_mode((largura, altura))
-pygame.display.set_caption('Sprites teste')
 
 class Cowboy_andando(pygame.sprite.Sprite):
     def __init__(self):
@@ -313,22 +307,3 @@ todas_as_sprites.add(bau_placacin)
 todas_as_sprites.add(bau_ouro)
 todas_as_sprites.add(bau_medalha)
 
-relogio = pygame.time.Clock()
-
-while True:
-    relogio.tick(10)
-    tela.fill((0,0,0))
-    for event in pygame.event.get():
-        if event.type == QUIT:
-            pygame.quit()
-            exit()
-        if event.type == KEYDOWN:
-            if event.key == K_RIGHT:
-                cowboy.iniciar_andar()
-            elif event.key == K_SPACE:
-                atirando.iniciar_tiro()
-    
-    todas_as_sprites.draw(tela)
-    todas_as_sprites.update()
-
-    pygame.display.flip()
