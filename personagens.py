@@ -116,14 +116,14 @@ class Inimigo:
                 self.velocidade_y *= -1
 
             # Se encostar na borda esquerda
-            tempo_atual = pygame.time.get_ticks()
+            ''''tempo_atual = pygame.time.get_ticks()
             if self.posicao[0] <= 0 and tempo_atual > cowboy.invulneravel_ate:
                 cowboy.vidas = max(cowboy.vidas - 1, 0)
                 cowboy.invulneravel_ate = tempo_atual + 1000  # 1 segundo invulnerabilidade
                 self.ativo = False
                 self.projeteis.clear()
                 min_t, max_t = self.intervalo
-                self.respawn = pygame.time.get_ticks() + randint(min_t, max_t)
+                self.respawn = pygame.time.get_ticks() + randint(min_t, max_t)'''
 
 
     def atirar(self):
