@@ -1,31 +1,33 @@
 import pygame
-from config import intervalo_tiro
+from config import TELA, LARGURA, ALTURA, RELOGIO
 
-# Verifica se o usuário fechou a janela
-def verificar_saida():
-    for event in pygame.event.get():
-        if event.type ==  pygame.QUIT:
-            return True
-    return False
-    
+def tela_game_over():
+    fonte_titulo = pygame.font.Font(None, 80)
+    fonte_botao = pygame.font.Font(None, 50)
+    jogando = True
+    while jogando:
+        TELA.fill((0, 0, 0))  # fundo preto
 
-# Controla o movimento do cowboy com base nas teclas
-def mover_cowboy(teclas,cowboy):
-    if teclas[pygame.K_UP] or teclas[pygame.K_w]:
-        cowboy.y -= cowboy.velocidade
-    
-    if teclas[pygame.K_DOWN] or teclas[pygame.K_s]:
-        cowboy.y += cowboy.velocidade
+        # Texto "GAME OVER"
+        texto = fonte_titulo.render("GAME OVER", True, (255, 0, 0))
+        rect_texto = texto.get_rect(center=(LARGURA // 2, ALTURA // 3))
+        TELA.blit(texto, rect_texto)
 
-    if teclas[pygame.K_LEFT] or teclas[pygame.K_a]:
-        cowboy.x -= cowboy.velocidade
-    if teclas[pygame.K_RIGHT] or teclas[pygame.K_d]:
-        cowboy.x += cowboy.velocidade
+        # Botão "Jogar Novamente"
+        texto_botao = fonte_botao.render("Jogar Novamente", True, (255, 255, 255))
+        rect_botao = texto_botao.get_rect(center=(LARGURA // 2, ALTURA // 2))
+        pygame.draw.rect(TELA, (0, 128, 0), rect_botao.inflate(20, 10))  # fundo do botão
+        TELA.blit(texto_botao, rect_botao)
 
-# Controla a lógica de tiro do cowboy (tempo e criação)
-def controlar_tiro (cowboy, projeteis, ultimo_tiro):
-    tempo_atual = pygame.time.get_ticks()
-    if tempo_atual - ultimo_tiro >= intervalo_tiro:
-        projeteis.append(cowboy.atirar())
-        ultimo_tiro = tempo_atual
-    return ultimo_tiro
+        # Captura eventos
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                exit()
+
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if rect_botao.collidepoint(event.pos):
+                    return  # Sai do menu e volta pro jogo
+
+        pygame.display.flip()
+        RELOGIO.tick(60)
