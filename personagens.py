@@ -16,9 +16,6 @@ class Cowboy:
         self.ultimo_tiro = 0
         self.vidas = 3
         self.abates = 0
-        self.invulneravel_ate = 0  # Adicionado para controlar invulnerabilidade após levar dano
-
-
 
     def mover(self, teclas):
         if teclas[pygame.K_UP] and self.y > 0:
@@ -55,31 +52,16 @@ class Cowboy:
         self.projeteis = nova_lista
 
     def desenhar(self):
-    # Verifica se o cowboy está invulnerável
-        tempo_atual = pygame.time.get_ticks()
-        if tempo_atual < self.invulneravel_ate:
-        # Alterna entre branco e vermelho para efeito de "piscar"
-            if tempo_atual // 100 % 2 == 0:
-                cor_atual = (255, 255, 255)  # Cor branca para invulnerabilidade
-            else:
-                cor_atual = (255, 0, 0)  # Cor normal (vermelho()
-        else:
-            cor_atual = (255, 0, 0)  # Cor normal
-
-        # Desenha o cowboy usando a cor definida acima
-        pygame.draw.rect(TELA, cor_atual, (self.x, self.y, self.largura, self.altura))
-
-        # Desenha os tiros
+        pygame.draw.rect(TELA, self.cor, (self.x, self.y, self.largura, self.altura))
         for tiro in self.projeteis:
             pygame.draw.rect(TELA, (0, 0, 0), (tiro[0], tiro[1], 10, 5))
-
-        # Desenha as vidas
         for v in range(self.vidas):
+
             TELA.blit(coracao_img, (10 + v * 35, 10))
 
-        # Desenha a contagem de abates
         texto = FONTE.render(f"Abates: {self.abates}", True, (0, 0, 0))
         TELA.blit(texto, (600, 0))
+
     def get_rect(self):
         return pygame.Rect(self.x, self.y, self.largura, self.altura)
     
@@ -116,15 +98,12 @@ class Inimigo:
                 self.velocidade_y *= -1
 
             # Se encostar na borda esquerda
-            tempo_atual = pygame.time.get_ticks()
-            if self.posicao[0] <= 0 and tempo_atual > cowboy.invulneravel_ate:
-                cowboy.vidas = max(cowboy.vidas - 1, 0)
-                cowboy.invulneravel_ate = tempo_atual + 1000  # 1 segundo invulnerabilidade
+            if self.posicao[0] <= 0:
+                cowboy.vidas -= 1
                 self.ativo = False
                 self.projeteis.clear()
                 min_t, max_t = self.intervalo
                 self.respawn = pygame.time.get_ticks() + randint(min_t, max_t)
-
 
     def atirar(self):
         tempo_atual = pygame.time.get_ticks()
@@ -137,17 +116,11 @@ class Inimigo:
         nova_lista = []
         for tiro in self.projeteis:
             tiro[0] -= self.velocidade_tiro
-            # Verifica colisão com o cowboy e se ele está vulnerável
-            if pygame.Rect(tiro[0], tiro[1], 10, 5).colliderect(cowboy.get_rect()):
-                tempo_atual = pygame.time.get_ticks()
-                if tempo_atual > cowboy.invulneravel_ate:
-                    cowboy.vidas -= 1
-                    cowboy.invulneravel_ate = tempo_atual + 1000  # Fica invulnerável por 1 segundo
-                # Não adiciona o tiro à nova lista para removê-lo
-            elif tiro[0] > 0:
+            if tiro[0] > 0:
                 nova_lista.append(tiro)
+            if pygame.Rect(tiro[0], tiro[1], 10, 5).colliderect(cowboy.get_rect()):
+                cowboy.vidas -= 1
         self.projeteis = nova_lista
-
 
     def desenhar(self):
         if self.ativo:
@@ -156,5 +129,4 @@ class Inimigo:
                 pygame.draw.rect(TELA, (255, 0, 0), (tiro[0], tiro[1], 10, 5))
 
     def get_rect(self):
-
         return pygame.Rect(self.posicao[0], self.posicao[1], self.largura, self.altura)
